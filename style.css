@@ -323,6 +323,41 @@ body {
   left: 110px;
 }
 
+.icon[data-app="pomodoro"] {
+  top: 316px;
+  left: 110px;
+}
+
+.icon[data-app="tictac"] {
+  top: 416px;
+  left: 16px;
+}
+
+.icon[data-app="todo"] {
+  top: 416px;
+  left: 110px;
+}
+
+.icon[data-app="guess"] {
+  top: 516px;
+  left: 16px;
+}
+
+.icon[data-app="sticky"] {
+  top: 516px;
+  left: 110px;
+}
+
+.icon[data-app="rps"] {
+  top: 16px;
+  left: 204px;
+}
+
+.icon[data-app="pixel"] {
+  top: 116px;
+  left: 204px;
+}
+
 /* ---- WINDOWS ---- */
 .window {
   position: fixed;

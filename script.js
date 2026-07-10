@@ -1,4 +1,4 @@
-// manayOS — main application script
+// spacexOS — main application script
 
 let nextZIndex = 100;
 const openWindows = {};
@@ -117,7 +117,7 @@ const apps = {
     title: "Terminal", width: 400, height: 320,
     render: () => `
       <div class="terminal">
-        <div class="term-out" id="term-output">manayOS shell
+        <div class="term-out" id="term-output">spacexOS shell
 type 'help' for commands
 </div>
         <div class="term-row"><span>$</span><input id="term-input" class="term-in" autocomplete="off" spellcheck="false"></div>
@@ -129,7 +129,7 @@ type 'help' for commands
 
       const commands = {
         help: () => [
-          "manayOS — available commands:",
+          "spacexOS — available commands:",
           "  help      show this command list",
           "  whoami    who is logged in",
           "  date      today's date",
@@ -154,7 +154,7 @@ type 'help' for commands
           "  clear     wipe the screen",
         ].join("\n"),
 
-        whoami: () => "guest@manayOS",
+        whoami: () => "guest@spacexOS",
         date: () => new Date().toDateString(),
         time: () => new Date().toLocaleTimeString(),
 
@@ -299,7 +299,7 @@ type 'help' for commands
       win.querySelector("#draw-clear").addEventListener("click", () => { ctx.fillStyle = surface; ctx.fillRect(0, 0, canvas.width, canvas.height); });
       win.querySelector("#draw-save").addEventListener("click", () => {
         const link = document.createElement("a");
-        link.download = "manayos-drawing.png";
+        link.download = "spacexos-drawing.png";
         link.href = canvas.toDataURL();
         link.click();
       });
@@ -364,6 +364,359 @@ type 'help' for commands
         <div class="settings-row"><span>Built for</span> <span>Hack Club Jam</span></div>
         <div class="settings-row"><span>No password</span> <span>yes</span></div>
       </div>`,
+  },
+
+  pomodoro: {
+    title: "Pomodoro Technique Timer", width: 280, height: 240,
+    render: () => `
+      <div style="display:flex; flex-direction:column; align-items:center; height:100%; justify-content:center; gap:14px;">
+        <div style="font-family:var(--mono); font-size:48px; color:var(--c7); font-weight:bold;" id="pomo-time">25:00</div>
+        <div style="display:flex; gap:8px;">
+          <button id="pomo-start" style="padding:6px 16px; background:var(--c1); color:#fff; border:2px solid; border-color:#5fd0d2 #05585a #05585a #5fd0d2; cursor:pointer; font-family:var(--ui);">Start</button>
+          <button id="pomo-reset" style="padding:6px 16px; background:var(--gray); color:#000; border:2px solid; border-color:var(--gray-l) var(--gray-d) var(--gray-d) var(--gray-l); cursor:pointer; font-family:var(--ui);">Reset</button>
+        </div>
+      </div>
+    `,
+    init: (win) => {
+      let seconds = 1500;
+      let running = false;
+      const display = win.querySelector("#pomo-time");
+      const startBtn = win.querySelector("#pomo-start");
+      const resetBtn = win.querySelector("#pomo-reset");
+      let interval = null;
+
+      const updateDisplay = () => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        display.textContent = `${mins}:${secs < 10 ? "0" : ""}${secs}`;
+      };
+
+      startBtn.addEventListener("click", () => {
+        if (!running) {
+          running = true;
+          startBtn.textContent = "Pause";
+          interval = setInterval(() => {
+            if (seconds > 0) {
+              seconds--;
+              updateDisplay();
+            } else {
+              running = false;
+              clearInterval(interval);
+              startBtn.textContent = "Start";
+              alert("Time's up! Take a break.");
+            }
+          }, 1000);
+        } else {
+          running = false;
+          clearInterval(interval);
+          startBtn.textContent = "Start";
+        }
+      });
+
+      resetBtn.addEventListener("click", () => {
+        running = false;
+        clearInterval(interval);
+        seconds = 1500;
+        updateDisplay();
+        startBtn.textContent = "Start";
+      });
+    },
+  },
+
+  tictac: {
+    title: "Tic-Tac-Toe", width: 280, height: 340,
+    render: () => `
+      <div style="display:flex; flex-direction:column; height:100%; gap:10px; padding:10px;">
+        <div style="text-align:center; font-weight:bold; font-size:14px;" id="ttt-status">Your turn (X)</div>
+        <div id="ttt-board" style="display:grid; grid-template-columns:repeat(3,1fr); gap:4px; flex:1; aspect-ratio:1;">
+          ${Array(9).fill(0).map((_, i) => `<button data-idx="${i}" style="font-size:20px; font-weight:bold; cursor:pointer; background:var(--gray); border:2px solid; border-color:var(--gray-l) var(--gray-d) var(--gray-d) var(--gray-l);" class="ttt-cell"></button>`).join("")}
+        </div>
+        <button id="ttt-reset" style="padding:6px 12px; background:var(--c1); color:#fff; border:2px solid; border-color:#5fd0d2 #05585a #05585a #5fd0d2; cursor:pointer; font-family:var(--ui); width:100%;">New Game</button>
+      </div>
+    `,
+    init: (win) => {
+      let board = Array(9).fill(null);
+      let turn = "X";
+      const cells = win.querySelectorAll(".ttt-cell");
+      const status = win.querySelector("#ttt-status");
+      const resetBtn = win.querySelector("#ttt-reset");
+
+      const checkWinner = () => {
+        const lines = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]];
+        for (let [a, b, c] of lines) if (board[a] && board[a] === board[b] && board[a] === board[c]) return board[a];
+        return null;
+      };
+
+      const aiMove = () => {
+        let empty = board.map((v, i) => v === null ? i : null).filter(v => v !== null);
+        if (empty.length > 0) {
+          let idx = empty[Math.floor(Math.random() * empty.length)];
+          board[idx] = "O";
+          cells[idx].textContent = "O";
+        }
+      };
+
+      cells.forEach(cell => {
+        cell.addEventListener("click", () => {
+          const idx = parseInt(cell.dataset.idx);
+          if (board[idx] === null && turn === "X") {
+            board[idx] = "X";
+            cell.textContent = "X";
+            if (checkWinner() === "X") { status.textContent = "You win!"; return; }
+            if (!board.includes(null)) { status.textContent = "Draw!"; return; }
+            turn = "O";
+            setTimeout(() => {
+              aiMove();
+              if (checkWinner() === "O") { status.textContent = "AI wins!"; return; }
+              if (!board.includes(null)) { status.textContent = "Draw!"; return; }
+              turn = "X";
+              status.textContent = "Your turn (X)";
+            }, 400);
+          }
+        });
+      });
+
+      resetBtn.addEventListener("click", () => {
+        board = Array(9).fill(null);
+        turn = "X";
+        cells.forEach(c => c.textContent = "");
+        status.textContent = "Your turn (X)";
+      });
+    },
+  },
+
+  todo: {
+    title: "Todo", width: 300, height: 380,
+    render: () => `
+      <div style="display:flex; flex-direction:column; height:100%; gap:8px; padding:10px;">
+        <div style="display:flex; gap:4px;">
+          <input id="todo-input" type="text" placeholder="add a task..." style="flex:1; padding:4px 6px; border:2px solid; border-color:var(--gray-d) var(--gray-l) var(--gray-l) var(--gray-d); font-family:var(--ui); font-size:11px;">
+          <button id="todo-add" style="padding:4px 10px; background:var(--c1); color:#fff; border:2px solid; border-color:#5fd0d2 #05585a #05585a #5fd0d2; cursor:pointer; font-family:var(--ui); font-size:11px;">Add</button>
+        </div>
+        <div id="todo-list" style="flex:1; overflow-y:auto; border:2px solid; border-color:var(--gray-d) var(--gray-l) var(--gray-l) var(--gray-d); padding:6px; background:#fffef8;"></div>
+      </div>
+    `,
+    init: (win) => {
+      const input = win.querySelector("#todo-input");
+      const addBtn = win.querySelector("#todo-add");
+      const list = win.querySelector("#todo-list");
+      let todos = JSON.parse(localStorage.getItem("spacex-todos") || "[]");
+
+      const save = () => localStorage.setItem("spacex-todos", JSON.stringify(todos));
+      const render = () => {
+        list.innerHTML = todos.map((t, i) => `
+          <div style="display:flex; gap:6px; padding:4px; align-items:center; border-bottom:1px solid #ddd;">
+            <input type="checkbox" ${t.done ? "checked" : ""} style="cursor:pointer;" onchange="this.parentElement.parentElement.parentElement.todoToggle(${i})">
+            <span style="flex:1; text-decoration:${t.done ? "line-through" : "none"}; opacity:${t.done ? 0.6 : 1}; font-size:12px;">${t.text}</span>
+            <button style="padding:2px 6px; background:#ff6b6b; color:#fff; border:1px solid #c92a2a; cursor:pointer; font-size:10px; font-family:var(--ui);" onclick="this.parentElement.parentElement.parentElement.todoDel(${i})">X</button>
+          </div>
+        `).join("");
+      };
+
+      win.todoToggle = (i) => { todos[i].done = !todos[i].done; save(); render(); };
+      win.todoDel = (i) => { todos.splice(i, 1); save(); render(); };
+
+      addBtn.addEventListener("click", () => {
+        if (input.value.trim()) {
+          todos.push({ text: input.value, done: false });
+          input.value = "";
+          save();
+          render();
+        }
+      });
+      input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") addBtn.click();
+      });
+      render();
+    },
+  },
+
+  guess: {
+    title: "Guess It", width: 300, height: 260,
+    render: () => `
+      <div style="display:flex; flex-direction:column; align-items:center; height:100%; justify-content:center; gap:12px; text-align:center;">
+        <p style="font-size:13px;">thinking of a number 1-100... guess it!</p>
+        <div style="display:flex; gap:6px;">
+          <input id="guess-input" type="number" min="1" max="100" placeholder="?" style="width:70px; padding:6px; text-align:center; font-family:var(--ui); font-size:16px; border:2px solid; border-color:var(--gray-d) var(--gray-l) var(--gray-l) var(--gray-d);">
+          <button id="guess-btn" style="padding:6px 14px; background:var(--c1); color:#fff; border:2px solid; border-color:#5fd0d2 #05585a #05585a #5fd0d2; cursor:pointer; font-family:var(--ui);">Guess</button>
+        </div>
+        <p id="guess-feedback" style="font-size:13px; font-weight:bold; min-height:20px;"></p>
+        <button id="guess-reset" style="padding:4px 12px; background:var(--gray); color:#000; border:2px solid; border-color:var(--gray-l) var(--gray-d) var(--gray-d) var(--gray-l); cursor:pointer; font-family:var(--ui); font-size:11px;">New Number</button>
+      </div>
+    `,
+    init: (win) => {
+      let target = Math.floor(Math.random() * 100) + 1;
+      let tries = 0;
+      const input = win.querySelector("#guess-input");
+      const btn = win.querySelector("#guess-btn");
+      const feedback = win.querySelector("#guess-feedback");
+      const resetBtn = win.querySelector("#guess-reset");
+
+      const doGuess = () => {
+        const val = parseInt(input.value);
+        if (!val || val < 1 || val > 100) { feedback.textContent = "type a number 1-100!"; return; }
+        tries++;
+        if (val === target) {
+          feedback.textContent = `got it in ${tries} tries!`;
+          feedback.style.color = "var(--c3)";
+        } else if (val < target) {
+          feedback.textContent = "too low, go higher";
+          feedback.style.color = "var(--c5)";
+        } else {
+          feedback.textContent = "too high, go lower";
+          feedback.style.color = "var(--c7)";
+        }
+        input.value = "";
+        input.focus();
+      };
+
+      btn.addEventListener("click", doGuess);
+      input.addEventListener("keypress", e => { if (e.key === "Enter") doGuess(); });
+      resetBtn.addEventListener("click", () => {
+        target = Math.floor(Math.random() * 100) + 1;
+        tries = 0;
+        feedback.textContent = "new number picked, guess away";
+        feedback.style.color = "#000";
+        input.value = "";
+        input.focus();
+      });
+    },
+  },
+
+  sticky: {
+    title: "Sticky Notes", width: 360, height: 320,
+    render: () => `
+      <div style="display:flex; flex-direction:column; height:100%; gap:8px;">
+        <button id="sticky-add" style="padding:5px 12px; background:var(--c6); color:#000; border:2px solid; border-color:var(--gray-l) var(--gray-d) var(--gray-d) var(--gray-l); cursor:pointer; font-family:var(--ui); align-self:flex-start;">+ New Note</button>
+        <div id="sticky-board" style="flex:1; overflow-y:auto; display:flex; flex-wrap:wrap; gap:10px; align-content:flex-start; padding:4px;"></div>
+      </div>
+    `,
+    init: (win) => {
+      const board = win.querySelector("#sticky-board");
+      const addBtn = win.querySelector("#sticky-add");
+      const colors = ["#fff59d", "#ffab91", "#a5d6a7", "#90caf9", "#ce93d8", "#f48fb1"];
+      let notes = JSON.parse(localStorage.getItem("spacex-sticky") || "[]");
+
+      const save = () => localStorage.setItem("spacex-sticky", JSON.stringify(notes));
+
+      const render = () => {
+        board.innerHTML = "";
+        notes.forEach((note, i) => {
+          const div = document.createElement("div");
+          const rotation = (i % 2 === 0 ? -1 : 1) * (2 + (i % 3));
+          div.style.cssText = `width:110px; min-height:100px; background:${note.color}; padding:8px; box-shadow:2px 2px 5px rgba(0,0,0,0.3); transform:rotate(${rotation}deg); position:relative; font-family:var(--ui); font-size:11px;`;
+
+          const editable = document.createElement("div");
+          editable.contentEditable = "true";
+          editable.style.cssText = "outline:none; min-height:70px; word-break:break-word; color:#000;";
+          editable.textContent = note.text;
+          editable.addEventListener("blur", () => { notes[i].text = editable.textContent; save(); });
+
+          const delBtn = document.createElement("button");
+          delBtn.textContent = "X";
+          delBtn.style.cssText = "position:absolute; top:2px; right:2px; width:16px; height:16px; font-size:9px; line-height:1; cursor:pointer; background:rgba(0,0,0,0.15); border:none; border-radius:50%;";
+          delBtn.addEventListener("click", () => { notes.splice(i, 1); save(); render(); });
+
+          div.append(editable, delBtn);
+          board.appendChild(div);
+        });
+      };
+
+      addBtn.addEventListener("click", () => {
+        notes.push({ text: "new note...", color: colors[Math.floor(Math.random() * colors.length)] });
+        save();
+        render();
+      });
+
+      render();
+    },
+  },
+
+  rps: {
+    title: "Rock Paper Scissors", width: 340, height: 300,
+    render: () => `
+      <div style="display:flex; flex-direction:column; align-items:center; height:100%; justify-content:center; gap:14px; text-align:center;">
+        <div style="font-size:13px;">pick your move!</div>
+        <div style="display:flex; gap:8px;">
+          <button class="rps-move" data-move="rock" style="padding:8px 12px; background:var(--c5); color:#fff; border:2px solid; border-color:rgba(255,255,255,.5) rgba(0,0,0,.35) rgba(0,0,0,.35) rgba(255,255,255,.5); cursor:pointer; font-family:var(--ui);">Rock</button>
+          <button class="rps-move" data-move="paper" style="padding:8px 12px; background:var(--c3); color:#fff; border:2px solid; border-color:rgba(255,255,255,.5) rgba(0,0,0,.35) rgba(0,0,0,.35) rgba(255,255,255,.5); cursor:pointer; font-family:var(--ui);">Paper</button>
+          <button class="rps-move" data-move="scissors" style="padding:8px 12px; background:var(--c7); color:#fff; border:2px solid; border-color:rgba(255,255,255,.5) rgba(0,0,0,.35) rgba(0,0,0,.35) rgba(255,255,255,.5); cursor:pointer; font-family:var(--ui);">Scissors</button>
+        </div>
+        <div id="rps-result" style="font-size:13px; min-height:36px; font-weight:bold;"></div>
+        <div id="rps-score" style="font-family:var(--mono); font-size:12px;">wins: 0 &nbsp; losses: 0 &nbsp; draws: 0</div>
+      </div>
+    `,
+    init: (win) => {
+      let wins = 0, losses = 0, draws = 0;
+      const moves = ["rock", "paper", "scissors"];
+      const result = win.querySelector("#rps-result");
+      const score = win.querySelector("#rps-score");
+
+      win.querySelectorAll(".rps-move").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const you = btn.dataset.move;
+          const cpu = moves[Math.floor(Math.random() * 3)];
+          let outcome;
+          if (you === cpu) { outcome = "draw!"; draws++; }
+          else if (
+            (you === "rock" && cpu === "scissors") ||
+            (you === "paper" && cpu === "rock") ||
+            (you === "scissors" && cpu === "paper")
+          ) { outcome = "you win!"; wins++; }
+          else { outcome = "you lose!"; losses++; }
+          result.textContent = `you: ${you} vs cpu: ${cpu} — ${outcome}`;
+          score.innerHTML = `wins: ${wins} &nbsp; losses: ${losses} &nbsp; draws: ${draws}`;
+        });
+      });
+    },
+  },
+
+  pixel: {
+    title: "Pixel Art", width: 340, height: 400,
+    render: () => {
+      const cells = Array(144).fill(0).map(() =>
+        `<div class="px-cell" style="background:#fff;"></div>`
+      ).join("");
+      const palette = ["#000000", "#e93f33", "#d4a017", "#2a9d5c", "#3a6ea5", "#6d5acd", "#ffffff"];
+      const swatches = palette.map((c, i) =>
+        `<div class="px-color${i === 0 ? " active" : ""}" data-color="${c}" style="width:22px; height:22px; background:${c}; cursor:pointer; border:2px solid ${i === 0 ? "#000" : (c === "#ffffff" ? "#ccc" : "transparent")};"></div>`
+      ).join("");
+      return `
+        <div style="display:flex; flex-direction:column; height:100%; gap:8px;">
+          <div style="display:flex; gap:5px; flex-wrap:wrap;">${swatches}</div>
+          <div id="px-grid" style="flex:1; display:grid; grid-template-columns:repeat(12, 1fr); grid-template-rows:repeat(12, 1fr); border:2px solid; border-color:var(--gray-d) var(--gray-l) var(--gray-l) var(--gray-d);">${cells}</div>
+          <button id="px-clear" style="padding:5px 12px; background:var(--gray); color:#000; border:2px solid; border-color:var(--gray-l) var(--gray-d) var(--gray-d) var(--gray-l); cursor:pointer; font-family:var(--ui); align-self:flex-start;">Clear</button>
+        </div>
+      `;
+    },
+    init: (win) => {
+      let current = "#000000";
+      let painting = false;
+      const swatches = win.querySelectorAll(".px-color");
+      const cells = win.querySelectorAll(".px-cell");
+
+      swatches.forEach(sw => {
+        sw.style.borderColor = sw.dataset.color === current ? "#000" : (sw.dataset.color === "#ffffff" ? "#ccc" : "transparent");
+        sw.addEventListener("click", () => {
+          current = sw.dataset.color;
+          swatches.forEach(s => s.style.borderColor = s.dataset.color === "#ffffff" ? "#ccc" : "transparent");
+          sw.style.borderColor = "#000";
+        });
+      });
+
+      cells.forEach(cell => {
+        cell.style.borderRight = "1px solid #eee";
+        cell.style.borderBottom = "1px solid #eee";
+        const paint = () => { cell.style.background = current; };
+        cell.addEventListener("mousedown", () => { painting = true; paint(); });
+        cell.addEventListener("mouseenter", () => { if (painting) paint(); });
+      });
+      document.addEventListener("mouseup", () => { painting = false; });
+
+      win.querySelector("#px-clear").addEventListener("click", () => {
+        cells.forEach(c => c.style.background = "#fff");
+      });
+    },
   },
 };
 
